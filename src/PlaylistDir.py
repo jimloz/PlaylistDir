@@ -136,7 +136,11 @@ class Data_Handler:
                 logger.info(f"Folder Doesn't Exist - Check Mounted Volumes")
                 return
 
-            subfolders = [f for f in os.listdir(self.parent_folder) if os.path.isdir(os.path.join(self.parent_folder, f))]
+            subfolders = [
+                os.path.relpath(os.path.join(root, d), self.parent_folder)
+                for root, dirs, _ in os.walk(self.parent_folder)
+                for d in dirs
+            ]
 
             if not subfolders:
                 overall_status = "Parent Folder Empty"
@@ -162,7 +166,7 @@ class Data_Handler:
                     if not music_files:
                         continue
 
-                    self.playlist_file = os.path.join(self.playlist_folder, f"{subfolder}.m3u")
+                    self.playlist_file = os.path.join(self.playlist_folder, f"{subfolder.split('/')[-1]}.m3u")
                     playlist_info = {"Name": subfolder, "Count": len(music_files), "Status": "Created m3u"}
 
                     with open(self.playlist_file, "w") as file:
@@ -178,7 +182,7 @@ class Data_Handler:
                 else:
                     overall_status = "Playlists Generated"
                     if plex_update_req:
-                        ret = self.add_playlist_to_plex(subfolder)
+                        ret = self.add_playlist_to_plex(subfolder.split('/')[-1])
                         if ret == "Success":
                             playlist_info["Status"] += ", Added to Plex"
                         else:
